@@ -10,7 +10,7 @@
 
 int i = 0;
      
-int remote_start = 0;                 // in questo primo programma, si inizier√† con un val (valore) per conservare lo stato del pin di input su 0
+int remote_start = 0;                 // in questo primo programma, si inizier‡ con un val (valore) per conservare lo stato del pin di input su 0
 
 int lock_in_a_row = 0;
 unsigned long last_lock_detected_time = 0;
@@ -159,5 +159,8 @@ void loop() {
 
     //out of remote start scope
     remote_start = 0;
+
+  		Serial.print("no_more_remote_scope\n");
+
   } 
 }
