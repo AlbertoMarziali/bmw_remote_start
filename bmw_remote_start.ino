@@ -6,14 +6,17 @@
 #define PROTO
 
 //define pinout of transistors
-#define TRANSISTOR_START 2  
-#define TRANSISTOR_BRAKE 3
-#define TRANSISTOR_KEY 4
+#define TRANSISTOR_START_1 2  
+#define TRANSISTOR_START_2 3  
+#define TRANSISTOR_BRAKE 4
+#define TRANSISTOR_KEY_POWER 5
+#define TRANSISTOR_KEY_LOCK 6
+#define TRANSISTOR_KEY_UNLOCK 7
 
-#define PROTO_BUTTON_LOCK 5
-#define PROTO_BUTTON_BRAKE 6
-#define PROTO_BUTTON_KEY 7
-#define PROTO_BUTTON_ENGINE_STATUS 8
+#define PROTO_BUTTON_LOCK 10
+#define PROTO_BUTTON_BRAKE 11
+#define PROTO_BUTTON_KEY 12
+#define PROTO_BUTTON_ENGINE_STATUS 13
 
 //5 seconds of preheating
 #define PREHEATING_DURATION 5000 
@@ -24,7 +27,9 @@ bool status_lock_button = false;
 bool status_key_present = false;
 bool status_brake_light = false;
 
-bool engine_preheating = false;
+bool engine_preheating_1 = false;
+bool engine_preheating_2 = false;
+bool engine_preheating_3 = false;
 unsigned long preheating_time = 0;
 bool engine_start = false;
 bool engine_stop = false;
@@ -121,6 +126,7 @@ void can_updateStatus()
        {
          Serial.println("Engine is NOT running"); 
          status_engine_running = false;
+         remote_start = false;
        }
 
        //key present status
@@ -167,35 +173,86 @@ void proto_setup()
 void proto_updateStatus()
 {
   status_engine_running = digitalRead(PROTO_BUTTON_ENGINE_STATUS) == HIGH;
+  if(!status_engine_running)
+             remote_start = false;
   status_lock_button = digitalRead(PROTO_BUTTON_LOCK) == HIGH;
   status_key_present = digitalRead(PROTO_BUTTON_KEY) == HIGH;
   status_brake_light = digitalRead(PROTO_BUTTON_BRAKE) == HIGH;
 }
 
-void engine_do_preheating()
+void engine_do_preheating_1()
 {
-  if(preheating_time == 0) //start preheating
+  //open the car (hold button on keyfob)
+  if(transistor_hold_time == 0)
+  {
+    digitalWrite(TRANSISTOR_KEY_POWER, HIGH);
+    digitalWrite(TRANSISTOR_KEY_UNLOCK, HIGH);
+    
+    transistor_hold_time = millis();
+    Serial.print("car opening\n");
+  }
+  else if(millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION) //stop holding button after some time
+  {
+    digitalWrite(TRANSISTOR_KEY_UNLOCK, LOW);
+
+    engine_preheating_1 = false;
+    engine_preheating_2 = true;
+    
+    transistor_hold_time = 0;
+    Serial.print("car opened\n");
+  }
+}
+
+
+void engine_do_preheating_2()
+{
+  //turn on the car (hold button)
+  if(transistor_hold_time == 0)
+  {
+    digitalWrite(TRANSISTOR_START_1, HIGH);
+    digitalWrite(TRANSISTOR_START_2, HIGH);
+    
+    transistor_hold_time = millis();
+    Serial.print("car preheating starting\n");
+  }
+  else if(millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION) //stop holding button after some time
+  {
+    digitalWrite(TRANSISTOR_START_1, LOW);
+    digitalWrite(TRANSISTOR_START_2, LOW);
+
+    engine_preheating_2 = false;
+    engine_preheating_3 = true;
+    
+    transistor_hold_time = 0;
+    Serial.print("car preheating started\n");
+  }
+}
+
+
+void engine_do_preheating_3()
+{
+  //close the car
+  if(preheating_time == 0) 
   {
     if(transistor_hold_time == 0)          //start holding the transistor
     {
-      digitalWrite(TRANSISTOR_KEY, HIGH);
-      digitalWrite(TRANSISTOR_START, HIGH);
+      digitalWrite(TRANSISTOR_KEY_LOCK, HIGH);
       
       transistor_hold_time = millis();
-      Serial.print("starting preheating\n");
+      Serial.print("car closing\n");
     }
     else if(millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION)  //stop holding transistors
     {
-      digitalWrite(TRANSISTOR_START, LOW);
+      digitalWrite(TRANSISTOR_KEY_LOCK, LOW);
       preheating_time = millis();
       
       transistor_hold_time = 0;
-      Serial.print("preheating started\n");
+      Serial.print("car closed\n");
     }
   }
   else if(millis() - preheating_time > PREHEATING_DURATION) //stop preheating and start the engine
   {
-    engine_preheating = false;
+    engine_preheating_3 = false;
     engine_start = true;
   }
 }
@@ -206,7 +263,8 @@ void engine_do_start()
   if(transistor_hold_time == 0)
   {
     digitalWrite(TRANSISTOR_BRAKE, HIGH);
-    digitalWrite(TRANSISTOR_START, HIGH);
+    digitalWrite(TRANSISTOR_START_1, HIGH);
+    digitalWrite(TRANSISTOR_START_2, HIGH);
     
     transistor_hold_time = millis();
     Serial.print("engine starting\n");
@@ -214,8 +272,9 @@ void engine_do_start()
   else if(millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION) //stop holding buttons after some time
   {
     engine_start = false;
-    digitalWrite(TRANSISTOR_START, LOW);
-    digitalWrite(TRANSISTOR_KEY, LOW);
+    digitalWrite(TRANSISTOR_START_1, LOW);
+    digitalWrite(TRANSISTOR_START_2, LOW);
+    digitalWrite(TRANSISTOR_KEY_POWER, LOW);
     digitalWrite(TRANSISTOR_BRAKE, LOW);
     remote_start = true;
     
@@ -228,14 +287,16 @@ void engine_do_stop()
 {
   if(transistor_hold_time == 0) //start holding the transistor
   {
-    digitalWrite(TRANSISTOR_START, HIGH);
+    digitalWrite(TRANSISTOR_START_1, HIGH);
+    digitalWrite(TRANSISTOR_START_2, HIGH);
 
     transistor_hold_time = millis();
     Serial.print("stopping engine\n");
   }
   else if(millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION)  //stop holding transistors
   {
-    digitalWrite(TRANSISTOR_START, LOW);
+    digitalWrite(TRANSISTOR_START_1, LOW);
+    digitalWrite(TRANSISTOR_START_2, LOW);
     transistor_hold_time = 0;
     engine_stop = false;
 
@@ -249,9 +310,13 @@ void setup() {
   Serial.begin(9600);
   Serial.print("[ BMW REMOTE START v1 ]\n");
   
-  pinMode(TRANSISTOR_START, OUTPUT);       // questo comando imposta il pin digitale come output  
+  pinMode(TRANSISTOR_START_1, OUTPUT);       
+  pinMode(TRANSISTOR_START_2, OUTPUT); 
   pinMode(TRANSISTOR_BRAKE, OUTPUT);
-  pinMode(TRANSISTOR_KEY, OUTPUT);
+  pinMode(TRANSISTOR_KEY_POWER, OUTPUT);
+  pinMode(TRANSISTOR_KEY_LOCK, OUTPUT);
+  pinMode(TRANSISTOR_KEY_UNLOCK, OUTPUT);
+
 
 #ifdef PROTO 
   proto_setup();
@@ -301,11 +366,11 @@ void loop() {
       last_lock_detected_time = 0;
 
       //use triple click action only if the key is not inside the car
-      if(!status_key_present && !engine_preheating)
+      if(!status_key_present && !engine_preheating_1 && !engine_preheating_2 && !engine_preheating_3)
         if(!remote_start && !status_engine_running) //if not in remote start phase and the engine is not already running
         {
           //init preheating
-          engine_preheating = true;
+          engine_preheating_1 = true;
           preheating_time = 0;
         }
         else
@@ -333,9 +398,19 @@ void loop() {
 
     //Now that everything is decided, do the things it has to do
 
-    //engine preheating
-    if(engine_preheating)
-      engine_do_preheating();
+    
+
+    //engine preheating phase 1 (open car)
+    if(engine_preheating_1)
+      engine_do_preheating_1();
+
+    //engine preheating phase 2 (turn on the car (NOT THE ENGINE))
+    if(engine_preheating_2)
+      engine_do_preheating_2();
+
+    //engine preheating phase 3 (close the car)
+    if(engine_preheating_3)
+      engine_do_preheating_3();
 
     //engine start
     if(engine_start)
