@@ -206,19 +206,17 @@ void engine_do_preheating_1()
 
 void engine_do_preheating_2()
 {
-  //turn on the car (hold button)
+  //close the car again (hold button)
   if(transistor_hold_time == 0)
   {
-    digitalWrite(TRANSISTOR_START_1, HIGH);
-    digitalWrite(TRANSISTOR_START_2, HIGH);
-    
+    digitalWrite(TRANSISTOR_KEY_LOCK, HIGH);
+  
     transistor_hold_time = millis();
     Serial.print("car preheating starting\n");
   }
   else if(millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION) //stop holding button after some time
   {
-    digitalWrite(TRANSISTOR_START_1, LOW);
-    digitalWrite(TRANSISTOR_START_2, LOW);
+    digitalWrite(TRANSISTOR_KEY_LOCK, LOW);
 
     engine_preheating_2 = false;
     engine_preheating_3 = true;
@@ -231,19 +229,21 @@ void engine_do_preheating_2()
 
 void engine_do_preheating_3()
 {
-  //close the car
+  //turn on the car ignition
   if(preheating_time == 0) 
   {
     if(transistor_hold_time == 0)          //start holding the transistor
     {
-      digitalWrite(TRANSISTOR_KEY_LOCK, HIGH);
-      
+      digitalWrite(TRANSISTOR_START_1, HIGH);
+      digitalWrite(TRANSISTOR_START_2, HIGH);
+    
       transistor_hold_time = millis();
       Serial.print("car closing\n");
     }
     else if(millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION)  //stop holding transistors
     {
-      digitalWrite(TRANSISTOR_KEY_LOCK, LOW);
+      digitalWrite(TRANSISTOR_START_1, LOW);
+      digitalWrite(TRANSISTOR_START_2, LOW);
       preheating_time = millis();
       
       transistor_hold_time = 0;
@@ -274,8 +274,8 @@ void engine_do_start()
     engine_start = false;
     digitalWrite(TRANSISTOR_START_1, LOW);
     digitalWrite(TRANSISTOR_START_2, LOW);
-    digitalWrite(TRANSISTOR_KEY_POWER, LOW);
     digitalWrite(TRANSISTOR_BRAKE, LOW);
+    digitalWrite(TRANSISTOR_KEY_POWER, LOW);
     remote_start = true;
     
     transistor_hold_time = 0;
@@ -404,11 +404,11 @@ void loop() {
     if(engine_preheating_1)
       engine_do_preheating_1();
 
-    //engine preheating phase 2 (turn on the car (NOT THE ENGINE))
+    //engine preheating phase 2 (close the car again, now without the alarm)
     if(engine_preheating_2)
       engine_do_preheating_2();
 
-    //engine preheating phase 3 (close the car)
+    //engine preheating phase 3 (turn on the car (NOT THE ENGINE)
     if(engine_preheating_3)
       engine_do_preheating_3();
 
