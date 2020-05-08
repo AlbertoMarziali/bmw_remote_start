@@ -3,7 +3,7 @@
 #include <SPI.h>
 
 //comment to enable can
-#define PROTO
+//#define PROTO
 
 //define pinout of transistors
 #define TRANSISTOR_START_1 2  
@@ -33,7 +33,10 @@ bool engine_preheating_3 = false;
 unsigned long preheating_time = 0;
 bool engine_start = false;
 bool engine_stop = false;
-bool remote_start = false;
+
+//remote start data
+bool remote_started = true;
+unsigned long remote_start_time = 0; 
 
 //timing data
 int lock_in_a_row = 0;
@@ -126,7 +129,10 @@ void can_updateStatus()
        {
          Serial.println("Engine is NOT running"); 
          status_engine_running = false;
-         remote_start = false;
+
+         //give one second to update canbus
+         if(remote_started && (millis() - remote_start_time > 1000))
+            remote_started = false;
        }
 
        //key present status
@@ -148,7 +154,7 @@ void can_setup()
 {
   // uses can lib default pin mode 
   mcp2515.reset();
-  mcp2515.setBitrate(CAN_500KBPS);
+  mcp2515.setBitrate(CAN_500KBPS, MCP_8MHZ);
   mcp2515.setNormalMode();
 
   //init the masks
@@ -159,6 +165,7 @@ void can_setup()
   mcp2515.setFilter(MCP2515::RXF0, 0, 0x21A);
   mcp2515.setFilter(MCP2515::RXF1, 0, 0x23A);
   mcp2515.setFilter(MCP2515::RXF2, 0, 0x130);
+  
 }
 
 
@@ -173,8 +180,9 @@ void proto_setup()
 void proto_updateStatus()
 {
   status_engine_running = digitalRead(PROTO_BUTTON_ENGINE_STATUS) == HIGH;
-  if(!status_engine_running)
-             remote_start = false;
+  //give one second to update 
+  if(remote_started && (millis() - remote_start_time > 1000))
+    remote_started = false;
   status_lock_button = digitalRead(PROTO_BUTTON_LOCK) == HIGH;
   status_key_present = digitalRead(PROTO_BUTTON_KEY) == HIGH;
   status_brake_light = digitalRead(PROTO_BUTTON_BRAKE) == HIGH;
@@ -269,14 +277,15 @@ void engine_do_start()
     transistor_hold_time = millis();
     Serial.print("engine starting\n");
   }
-  else if(millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION) //stop holding buttons after some time
+  else if(millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION * 2) //stop holding buttons after some time
   {
     engine_start = false;
     digitalWrite(TRANSISTOR_START_1, LOW);
     digitalWrite(TRANSISTOR_START_2, LOW);
     digitalWrite(TRANSISTOR_BRAKE, LOW);
     digitalWrite(TRANSISTOR_KEY_POWER, LOW);
-    remote_start = true;
+    remote_started = true;
+    remote_start_time = millis();
     
     transistor_hold_time = 0;
     Serial.print("engine started\n");
@@ -324,7 +333,6 @@ void setup() {
   can_setup();
 #endif
 }  
-
  
 void loop() {  
 
@@ -367,7 +375,7 @@ void loop() {
 
       //use triple click action only if the key is not inside the car
       if(!status_key_present && !engine_preheating_1 && !engine_preheating_2 && !engine_preheating_3)
-        if(!remote_start && !status_engine_running) //if not in remote start phase and the engine is not already running
+        if(!remote_started && !status_engine_running) //if not in remote start phase and the engine is not already running
         {
           //init preheating
           engine_preheating_1 = true;
@@ -380,8 +388,11 @@ void loop() {
         }
     }
     
-    //brake behavoir, if someone enter the remote started car
-    if(remote_start && status_brake_light)
+    //brake behavoir
+    //if someone enter the remote started car (1 sec bonus for canbus to update)
+    // a) without key, emergency anititheft shutoff
+    // b) with key, exit remote start scope
+    if(remote_started && (millis() - remote_start_time > 1000) && status_brake_light)
     {
       if(!status_key_present) //antitheft stop
       {
@@ -391,9 +402,19 @@ void loop() {
       }
 
       //out of remote start scope
-      remote_start = false;
+      remote_started = false;
 
       Serial.print("no more remote scope\n");
+    }
+
+    //remote start timeout
+    //car in remote start shutsoff after 15 minutes
+    if(remote_started && (millis() - remote_start_time > (unsigned long) 1000 * 60 * 15))
+    {
+      //engine stop
+      Serial.print("end of remote start\n");
+      engine_stop = true;
+      remote_started = false;
     }
 
     //Now that everything is decided, do the things it has to do
