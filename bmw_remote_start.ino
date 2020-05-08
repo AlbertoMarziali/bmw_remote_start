@@ -21,12 +21,14 @@
 //5 seconds of preheating
 #define PREHEATING_DURATION 5000 
 
-//booleans keeps track of statuses
+//booleans keep track of statuses read from canbus
 bool status_engine_running = false;
 bool status_lock_button = false;
-bool status_key_present = false;
 bool status_brake_light = false;
 
+//booleans keep track of phases
+bool trans_hold_on = false;
+bool trans_hold_off = false;
 bool engine_preheating_1 = false;
 bool engine_preheating_2 = false;
 bool engine_preheating_3 = false;
@@ -59,13 +61,11 @@ MCP2515 mcp2515(10);
  * 0x21A : data: first bit of Byte[0] is 1 -> break light is on
  * 
  * KEYFOB 
- * 0x23A : data: 00 30 04 60 ->  lock button pressed
- * 0x23A : data: 00 30 00 60 ->  lock button released
+ * 0x23A : data: 11 F3 04 3F ->  lock button pressed
+ * 0x23A : data: 11 F3 00 3F ->  lock button released
  * 
  * ENGINE STATUS
- * 0x130 : data: Byte[0] = 0x45 -> if engine is running
- * 0x130 : data: Byte[1] = 0x40 -> key detected
- * 0x130 : data: Byte[1] = 0x00 -> no key 
+ * 0x0A5 : data: Byte[5] = 0x00 and Byte[5] = 0x00 -> if engine is NOT running
  */
 
 
@@ -100,51 +100,41 @@ void can_updateStatus()
     }
     else if(canMsg.can_id == 0x23A)  //can id for keyfob
     {
-      if(   (canMsg.data[0] == 0x00)
-         && (canMsg.data[1] == 0x30)
+      if(   (canMsg.data[0] == 0x11)
+         && (canMsg.data[1] == 0xF3)
          && (canMsg.data[2] == 0x04)
-         && (canMsg.data[3] == 0x60)) //data = 00 30 04 60 ->  lock button pressed
+         && (canMsg.data[3] == 0x3F)) //data = 11 F3 04 3F ->  lock button pressed
        {
          Serial.println("Lock button pressed"); 
          status_lock_button = true;
        }
-      else if((canMsg.data[0] == 0x00)
-         && (canMsg.data[1] == 0x30)
+      else if((canMsg.data[0] == 0x11)
+         && (canMsg.data[1] == 0xF3)
          && (canMsg.data[2] == 0x00)
-         && (canMsg.data[3] == 0x60)) //data = 00 30 00 60 ->  lock button released
+         && (canMsg.data[3] == 0x3F)) //data = 11 F3 00 3F ->  lock button released
        {
          Serial.println("Lock button released"); 
          status_lock_button = false;
        }
     }
-    else if(canMsg.can_id == 0x130)  //can id for engine status
+    else if(canMsg.can_id == 0x0A5)  //can id for engine status
     {
       //engine running status
-      if((canMsg.data[0] == 0x45)) //data: Byte[0] = 0x45 -> if engine is running
-       {
-         Serial.println("Engine is running"); 
-         status_engine_running = true;
-       }
-       else
+      if((canMsg.data[5] == 0x00 &&
+          canMsg.data[6] == 0x00)) //data: Byte[5] = 0x00 and Byte[5] = 0x00 -> if engine is NOT running
        {
          Serial.println("Engine is NOT running"); 
          status_engine_running = false;
 
+         
          //give one second to update canbus
          if(remote_started && (millis() - remote_start_time > 1000))
             remote_started = false;
        }
-
-       //key present status
-       if((canMsg.data[1] == 0x40)) //data: Byte[1] = 0x40 -> key detected
+       else
        {
-         Serial.println("Key detected"); 
+         Serial.println("Engine is running"); 
          status_engine_running = true;
-       }
-       else if((canMsg.data[1] == 0x00)) //data: Byte[1] = 0x00 -> key not detected   
-       {
-         Serial.println("Key NOT detected"); 
-         status_engine_running = false;
        }
     }
   }
@@ -152,19 +142,21 @@ void can_updateStatus()
 
 void can_setup()
 {
-  // uses can lib default pin mode 
+  //reset mcp2515 and set can at 500KBPS and MCP to 8MHz quartz
   mcp2515.reset();
   mcp2515.setBitrate(CAN_500KBPS, MCP_8MHZ);
-  mcp2515.setNormalMode();
 
-  //init the masks
-  mcp2515.setFilterMask(MCP2515::MASK0, 0, 0x7ff);
-  mcp2515.setFilterMask(MCP2515::MASK1, 0, 0x7ff);
-  
+  //init the mask
+  mcp2515.setFilterMask(MCP2515::MASK0, 0, 0x3ff);
+  mcp2515.setFilterMask(MCP2515::MASK1, 0, 0x3ff);
+
   //init the filters
-  mcp2515.setFilter(MCP2515::RXF0, 0, 0x21A);
-  mcp2515.setFilter(MCP2515::RXF1, 0, 0x23A);
-  mcp2515.setFilter(MCP2515::RXF2, 0, 0x130);
+  mcp2515.setFilter(MCP2515::RXF0, 0, 0x21A); //break light
+  mcp2515.setFilter(MCP2515::RXF1, 0, 0x23A); //keyfob
+  mcp2515.setFilter(MCP2515::RXF2, 0, 0x0A5); //rpm
+
+  //start the sniffing
+  mcp2515.setNormalMode();
   
 }
 
@@ -184,29 +176,37 @@ void proto_updateStatus()
   if(remote_started && (millis() - remote_start_time > 1000))
     remote_started = false;
   status_lock_button = digitalRead(PROTO_BUTTON_LOCK) == HIGH;
-  status_key_present = digitalRead(PROTO_BUTTON_KEY) == HIGH;
   status_brake_light = digitalRead(PROTO_BUTTON_BRAKE) == HIGH;
 }
 
 void engine_do_preheating_1()
 {
   //open the car (hold button on keyfob)
-  if(transistor_hold_time == 0)
+  if(!trans_hold_on && !trans_hold_off && transistor_hold_time == 0)
   {
     digitalWrite(TRANSISTOR_KEY_POWER, HIGH);
     digitalWrite(TRANSISTOR_KEY_UNLOCK, HIGH);
     
     transistor_hold_time = millis();
+    trans_hold_on = true;
     Serial.print("car opening\n");
   }
-  else if(millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION) //stop holding button after some time
+  else if(trans_hold_on && (millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION)) //stop holding button after some time
   {
     digitalWrite(TRANSISTOR_KEY_UNLOCK, LOW);
-
+    
+    transistor_hold_time = millis();
+    trans_hold_on = false;
+    trans_hold_off = true;
+    Serial.print("waiting for car opened\n");
+  }
+  else if(trans_hold_off && (millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION)) //wait before going to next step
+  {
     engine_preheating_1 = false;
     engine_preheating_2 = true;
     
     transistor_hold_time = 0;
+    trans_hold_off = false;
     Serial.print("car opened\n");
   }
 }
@@ -215,21 +215,30 @@ void engine_do_preheating_1()
 void engine_do_preheating_2()
 {
   //close the car again (hold button)
-  if(transistor_hold_time == 0)
+  if(!trans_hold_on && !trans_hold_off && transistor_hold_time == 0)
   {
     digitalWrite(TRANSISTOR_KEY_LOCK, HIGH);
   
     transistor_hold_time = millis();
+    trans_hold_on = true;
     Serial.print("car preheating starting\n");
   }
-  else if(millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION) //stop holding button after some time
+  else if(trans_hold_on && (millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION)) //stop holding button after some time
   {
     digitalWrite(TRANSISTOR_KEY_LOCK, LOW);
-
+    
+    transistor_hold_time = millis();
+    trans_hold_on = false;
+    trans_hold_off = true;
+    Serial.print("waiting for car preheating started\n");
+  }
+  else if(trans_hold_off && (millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION)) //stop holding button after some time
+  {
     engine_preheating_2 = false;
     engine_preheating_3 = true;
     
     transistor_hold_time = 0;
+    trans_hold_off = false;
     Serial.print("car preheating started\n");
   }
 }
@@ -343,7 +352,7 @@ void loop() {
     can_updateStatus();
 #endif
 
-    //jreset the timer if timeout from previous lock
+    //reset the timer if timeout from previous lock
      if(millis() - last_lock_detected_time > 1000) 
       lock_in_a_row = 0;
 
@@ -373,8 +382,8 @@ void loop() {
       lock_in_a_row = 0;
       last_lock_detected_time = 0;
 
-      //use triple click action only if the key is not inside the car
-      if(!status_key_present && !engine_preheating_1 && !engine_preheating_2 && !engine_preheating_3)
+      //use triple click action only if it's not already turning on
+      if(!engine_preheating_1 && !engine_preheating_2 && !engine_preheating_3)
         if(!remote_started && !status_engine_running) //if not in remote start phase and the engine is not already running
         {
           //init preheating
@@ -389,18 +398,9 @@ void loop() {
     }
     
     //brake behavoir
-    //if someone enter the remote started car (1 sec bonus for canbus to update)
-    // a) without key, emergency anititheft shutoff
-    // b) with key, exit remote start scope
+    //if you enter the remote started car (1 sec bonus for canbus to update), exit remote start scope
     if(remote_started && (millis() - remote_start_time > 1000) && status_brake_light)
     {
-      if(!status_key_present) //antitheft stop
-      {
-          //engine stop
-          Serial.print("antitheft engine stop\n");
-          engine_stop = true;
-      }
-
       //out of remote start scope
       remote_started = false;
 
