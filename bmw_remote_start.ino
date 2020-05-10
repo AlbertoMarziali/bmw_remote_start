@@ -72,7 +72,7 @@ MCP2515 mcp2515(10);
 void can_updateStatus()
 {
   if (mcp2515.readMessage(&canMsg) == MCP2515::ERROR_OK) {
-    Serial.print(canMsg.can_id, HEX); // print ID
+    /*Serial.print(canMsg.can_id, HEX); // print ID
     Serial.print(" "); 
     Serial.print(canMsg.can_dlc, HEX); // print DLC
     Serial.print(" ");
@@ -83,7 +83,7 @@ void can_updateStatus()
     }
 
     Serial.println(); 
-  
+  */
     //doing the check!
     if(canMsg.can_id == 0x21A)       //can id for brake light
     {
@@ -123,7 +123,7 @@ void can_updateStatus()
       if((canMsg.data[5] == 0x00 &&
           canMsg.data[6] == 0x00)) //data: Byte[5] = 0x00 and Byte[5] = 0x00 -> if engine is NOT running
        {
-         Serial.println("Engine is NOT running"); 
+         //Serial.println("Engine is NOT running"); 
          status_engine_running = false;
 
          
@@ -261,6 +261,7 @@ void engine_do_preheating_3()
     {
       digitalWrite(TRANSISTOR_START_1, LOW);
       digitalWrite(TRANSISTOR_START_2, LOW);
+      digitalWrite(TRANSISTOR_BRAKE, HIGH);
       preheating_time = millis();
       
       transistor_hold_time = 0;
@@ -279,14 +280,13 @@ void engine_do_start()
   //starting engine (begin holding buttons)
   if(transistor_hold_time == 0)
   {
-    digitalWrite(TRANSISTOR_BRAKE, HIGH);
     digitalWrite(TRANSISTOR_START_1, HIGH);
     digitalWrite(TRANSISTOR_START_2, HIGH);
     
     transistor_hold_time = millis();
     Serial.print("engine starting\n");
   }
-  else if(millis() - transistor_hold_time > TRANSISTOR_HOLD_DURATION * 2) //stop holding buttons after some time
+  else if(millis() - transistor_hold_time > 2000) //stop holding buttons after some time
   {
     engine_start = false;
     digitalWrite(TRANSISTOR_START_1, LOW);
@@ -353,7 +353,7 @@ void loop() {
 #endif
 
     //reset the timer if timeout from previous lock
-     if(millis() - last_lock_detected_time > 1000) 
+     if(millis() - last_lock_detected_time > 1500) 
       lock_in_a_row = 0;
 
     //working on the triple lock click thing
@@ -365,7 +365,7 @@ void loop() {
     else if(wait_for_lock_release && !status_lock_button) //lock released for first time
     {
       wait_for_lock_release = false;
-      if(millis() - cur_lock_detected_time < 500) //if release happened in a short time (not an hold), count it as click in a row
+      if(millis() - cur_lock_detected_time < 1000) //if release happened in a short time (not an hold), count it as click in a row
       {
         lock_in_a_row++;
         last_lock_detected_time = millis(); //store the lock click detected time
