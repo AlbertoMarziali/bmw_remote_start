@@ -5,18 +5,29 @@
 //comment to enable can
 #define PROTO
 
-//define pinout of transistors
-#define RELAY_START_1 2  
-#define RELAY_START_2 3  
-#define RELAY_BRAKE 4
-#define RELAY_KEY_POWER 5
-#define RELAY_KEY_LOCK 6
-#define RELAY_KEY_UNLOCK 7
+//relays use inverted logic
+enum RELAY_STATUS {
+    RELAY_HIGH = 0,
+    RELAY_LOW = 1
+};
 
-#define PROTO_BUTTON_LOCK 10
-#define PROTO_BUTTON_BRAKE 11
-#define PROTO_BUTTON_KEY 12
-#define PROTO_BUTTON_ENGINE_STATUS 13
+//define pinout of transistors
+enum RELAYS {
+  RELAY_START_1 = 2,  
+  RELAY_START_2 = 3,  
+  RELAY_BRAKE = 4,
+  RELAY_KEY_POWER = 5,
+  RELAY_KEY_LOCK = 6,
+  RELAY_KEY_UNLOCK = 7
+};
+
+//proto buttons
+enum PROTO_BUTTONS {
+  PROTO_BUTTON_LOCK = 10,
+  PROTO_BUTTON_BRAKE = 11,
+  PROTO_BUTTON_KEY = 12,
+  PROTO_BUTTON_ENGINE_STATUS = 13
+};
 
 
 //booleans keep track of statuses read from canbus
@@ -194,77 +205,77 @@ void engine_do_start()
   //KEY_POWER_ON - 10 seconds
   if(millis() - engine_do_start_time < 2000)
   {
-    digitalWrite(RELAY_KEY_POWER, HIGH);
+    digitalWrite(RELAY_KEY_POWER, RELAY_HIGH);
     Serial.println("1) Turn on the in-car key (2 sec)");
   }
   //KEY_UNLOCK - 1 second
   else if(millis() - engine_do_start_time < 3000)
   {
-    digitalWrite(RELAY_KEY_UNLOCK, HIGH);
+    digitalWrite(RELAY_KEY_UNLOCK, RELAY_HIGH);
     Serial.println("2) Press unlock button (1 sec)");
   }
   //KEY_UNLOCK_RELEASE - 1 second
   else if(millis() - engine_do_start_time < 4000)
   {
-    digitalWrite(RELAY_KEY_UNLOCK, LOW);
+    digitalWrite(RELAY_KEY_UNLOCK, RELAY_LOW);
     Serial.println("3) Release unlock button and wait (1 sec)");
   }
   //KEY_LOCK - 1 second
   else if(millis() - engine_do_start_time < 5000)
   {
-    digitalWrite(RELAY_KEY_LOCK, HIGH);
+    digitalWrite(RELAY_KEY_LOCK, RELAY_HIGH);
     Serial.println("4) Press lock button (1 sec)");
   }
   //KEY_LOCK_RELEASE - 1 second
   else if(millis() - engine_do_start_time < 6000)
   {
-    digitalWrite(RELAY_KEY_LOCK, LOW);
+    digitalWrite(RELAY_KEY_LOCK, RELAY_LOW);
     Serial.println("5) Release lock button and wait (1 sec)");
   }
   //KEY_START - 1 second
   else if(millis() - engine_do_start_time < 7000)
   {
-    digitalWrite(RELAY_START_1, HIGH);
-    digitalWrite(RELAY_START_2, HIGH);
+    digitalWrite(RELAY_START_1, RELAY_HIGH);
+    digitalWrite(RELAY_START_2, RELAY_HIGH);
     Serial.println("6) Press start button (1 sec)");
   }
   //KEY_START_RELEASE - 1 second
   else if(millis() - engine_do_start_time < 8000)
   {
-    digitalWrite(RELAY_START_1, LOW);
-    digitalWrite(RELAY_START_2, LOW);
+    digitalWrite(RELAY_START_1, RELAY_LOW);
+    digitalWrite(RELAY_START_2, RELAY_LOW);
     Serial.println("7) Release the start button and wait (1 sec)");
   }
   //KEY_BRAKE - 5 seconds
   else if(millis() - engine_do_start_time < 13000)
   {
-    digitalWrite(RELAY_BRAKE, HIGH);
+    digitalWrite(RELAY_BRAKE, RELAY_HIGH);
     Serial.println("8) Start holding the brake and wait (5 sec)");
   }
   //KEY_START - 2 second
   else if(millis() - engine_do_start_time < 15000)
   {
-    digitalWrite(RELAY_START_1, HIGH);
-    digitalWrite(RELAY_START_2, HIGH);
+    digitalWrite(RELAY_START_1, RELAY_HIGH);
+    digitalWrite(RELAY_START_2, RELAY_HIGH);
     Serial.println("9) Press the start button (2 sec)");
   }
   //KEY_START_RELEASE - 1 second
   else if(millis() - engine_do_start_time < 16000)
   {
-    digitalWrite(RELAY_START_1, LOW);
-    digitalWrite(RELAY_START_2, LOW);
+    digitalWrite(RELAY_START_1, RELAY_LOW);
+    digitalWrite(RELAY_START_2, RELAY_LOW);
     Serial.println("10) Release the start button and wait (1 sec)");
   }
   //KEY_BRAKE_RELEASE - 1 second
   else if(millis() - engine_do_start_time < 17000)
   {
-    digitalWrite(RELAY_BRAKE, LOW);
+    digitalWrite(RELAY_BRAKE, RELAY_LOW);
     Serial.println("11) Release the brake and wait (1 sec)");
   }
   //KEY_POWER_RELEASE - 1 second
   else if(millis() - engine_do_start_time < 18000)
   {
-    digitalWrite(RELAY_KEY_POWER, LOW);
+    digitalWrite(RELAY_KEY_POWER, RELAY_LOW);
     Serial.println("12) Turn off the in-car key (1 sec)");
   }
   //ENGINE STARTED
@@ -297,15 +308,15 @@ void engine_do_stop()
   //KEY_START - 1 sec
   if(millis() - engine_do_stop_time < 1000)
   {
-    digitalWrite(RELAY_START_1, HIGH);
-    digitalWrite(RELAY_START_2, HIGH);
+    digitalWrite(RELAY_START_1, RELAY_HIGH);
+    digitalWrite(RELAY_START_2, RELAY_HIGH);
     Serial.println("1) Press start button (1 sec)");
   }
   //KEY_START_RELEASE - 1 sec
   else if(millis() - engine_do_stop_time < 2000)
   {
-    digitalWrite(RELAY_START_1, LOW);
-    digitalWrite(RELAY_START_2, LOW);
+    digitalWrite(RELAY_START_1, RELAY_LOW);
+    digitalWrite(RELAY_START_2, RELAY_LOW);
     Serial.println("2) Release the start button and wait (1 sec)");
   }
   //ENGINE STOPPED
@@ -331,12 +342,12 @@ void setup() {
   pinMode(RELAY_KEY_LOCK, OUTPUT);
   pinMode(RELAY_KEY_UNLOCK, OUTPUT);
 
-  digitalWrite(RELAY_START_1, LOW);
-  digitalWrite(RELAY_START_2, LOW);
-  digitalWrite(RELAY_BRAKE, LOW);
-  digitalWrite(RELAY_KEY_POWER, LOW);
-  digitalWrite(RELAY_KEY_LOCK, LOW);
-  digitalWrite(RELAY_KEY_UNLOCK, LOW);
+  digitalWrite(RELAY_START_1, RELAY_LOW);
+  digitalWrite(RELAY_START_2, RELAY_LOW);
+  digitalWrite(RELAY_BRAKE, RELAY_LOW);
+  digitalWrite(RELAY_KEY_POWER, RELAY_LOW);
+  digitalWrite(RELAY_KEY_LOCK, RELAY_LOW);
+  digitalWrite(RELAY_KEY_UNLOCK, RELAY_LOW);
   
 #ifdef PROTO 
   proto_setup();
