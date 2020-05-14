@@ -73,12 +73,14 @@ You have to simulate the press of the switch using the relay. To do that, just h
 ## Arduino wiring
 
 **Schematic**
+
 You can follow this schematic to build everything.
 Note: this schematic shows a 8x relay board, but you can use a 6x one
 
 ![arduino wiring](images/wiring_4.png)
 
 **Final look**
+
 This is the final look, with the spare key wired. You have to hide it somewhere inside the car.
 
 ![arduino_final wiring](images/wiring_5.jpg)
