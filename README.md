@@ -50,8 +50,8 @@ Attention: you can't use the 12V plug as power source, you need an always-powere
 **Brake Light Switch and Start-Stop Button**
 
 Here you can see how to wire break light switch and start/stop button:
--The start-stop button wiring is right behind the switch button, just pull it out.
--The break light switch wiring is above the brake pedal.
+- The start-stop button wiring is right behind the switch button, just pull it out.
+- The break light switch wiring is above the brake pedal.
 
 ![CAR Wiring](images/wiring_1.png)
 
