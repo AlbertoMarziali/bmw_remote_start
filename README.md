@@ -1,5 +1,11 @@
 # BMW F30 REMOTE START
-BMW F30 Remote start feature with Arduino
+BMW F30 Remote start project, made with Arduino
+
+# Features
+This project allows to do this things:
+- If the engine is off, remote start the car with a triple click on the lock button of the OEM keyfob.
+- After 15 minutes from remote start, if no one started driving, automatically shut off the car
+- If the engine is on, remote stop the car with a triple click on the lock button of the OEM keyfob.
 
 # How it works
 The Arduino, thanks to the MCP2515 board, constantly listen to the BMW K-CAN2 bus, looking for a triple lock button click. If found, it starts a 18 seconds long operation, during which it does those steps:
