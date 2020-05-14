@@ -26,20 +26,30 @@ Here's a list of boards you need for this project:
 - 6x Relay Board 5V
 
 # Car Wiring
-Here you can see how to wire break light sensor, start/stop button, canbus and power.
-- The start-stop button wiring is right behind the start button, you just have to remove it and hook to its wires.
-- The brake light switch wiring can be found over the brake pedal.
-- The KCAN2 wiring can be found at the FEM. Attention: the OBD2 port doesn't have KCAN2. You can't use it.
-- The 12V/GND needs to be always powered. You can find it at the FEM. 
 
-![CAR Wiring](images/wiring_car_1.png)
-![CAR Wiring](images/wiring_car_2.png)
-![CAR Wiring](images/wiring_car_3.png)
+**KCAN2**
+Attention: the OBD2 port doesn't have KCAN2. You can't use it. You have to take KCAN2 from the FEM
+- KCAN2_H: FEM A173\*8B, pin 50
+- KCAN2_L: FEM A173\*8B, pin 49
+
+**12V and GND**
+Attention: you can't use the 12V plug as power source, you need an always-powered 12V source. You can find it at the FEM.
+- 12V: FEM A173\*3B, pin 33
+- GND: FEM A173\*3B, pin 6
+
+**Brake Light and Start-Stop Button**
+Here you can see how to wire break light sensor and start/stop button:
+![CAR Wiring](images/wiring_1.png)
 
 # KeyFob Wiring
-Here you can see how to hook to spare keyfob power and unlock and lock buttons
-- You have to interrupt the battery positive connection, split it in 2 wires and feed them inside the relay.
 
-![KEY_POWER wiring](images/wiring_keyfob_1.jpg)
+**KeyFob Power**
+You have to interrupt the battery positive connection, split it in 2 wires and feed them inside the relay:
+![KEY_POWER wiring](images/wiring_2.jpg)
 
-![KEY_LOCK/UNLOCK wiring](images/wiring_keyfob_2.jpg)
+**KeyFob Lock and Unlock buttons**
+You have to simulate the press of the switch using the relay. To do that, just hook to the key switches like that:
+![KEY_LOCK/UNLOCK wiring](images/wiring_3.jpg)
+
+# Credits
+[autowp for arduino-mcp2515 open source library!](https://github.com/autowp/arduino-mcp2515)
