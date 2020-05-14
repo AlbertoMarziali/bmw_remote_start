@@ -3,7 +3,7 @@
 #include <SPI.h>
 
 //comment to enable can
-#define PROTO
+//#define PROTO
 
 //relays use inverted logic
 enum RELAY_STATUS {
