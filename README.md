@@ -67,7 +67,7 @@ You have to simulate the press of the switch using the relay. To do that, just h
 
 ## Arduino wiring
 
-You can follow this schematic to build everything:
+You can follow this schematic to build everything (this schematic shows a 8x relay board, but you can use a 6x one):
 ![arduino wiring](images/wiring_4.png)
 
 And this is the final look:
