@@ -50,6 +50,9 @@ Attention: you can't use the 12V plug as power source, you need an always-powere
 **Brake Light Switch and Start-Stop Button**
 
 Here you can see how to wire break light switch and start/stop button:
+-The start-stop button wiring is right behind the switch button, just pull it out.
+-The break light switch wiring is above the brake pedal.
+
 ![CAR Wiring](images/wiring_1.png)
 
 ## KeyFob Wiring
@@ -57,20 +60,24 @@ Here you can see how to wire break light switch and start/stop button:
 **KeyFob Power**
 
 You have to interrupt the battery positive connection, split it in 2 wires and feed them inside the relay:
+
 ![KEY_POWER wiring](images/wiring_2.jpg)
 
 
 **KeyFob Lock and Unlock buttons**
 
 You have to simulate the press of the switch using the relay. To do that, just hook to the key switches like that:
+
 ![KEY_LOCK/UNLOCK wiring](images/wiring_3.jpg)
 
 ## Arduino wiring
 
 You can follow this schematic to build everything (this schematic shows a 8x relay board, but you can use a 6x one):
+
 ![arduino wiring](images/wiring_4.png)
 
 And this is the final look:
+
 ![arduino_final wiring](images/wiring_5.jpg)
 
 # Credits
