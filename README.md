@@ -9,13 +9,13 @@ This project allows to do this things:
 
 # How it works
 The Arduino, thanks to the MCP2515 board, constantly listen to the BMW K-CAN2 bus, looking for a triple lock button click. If found, it starts a 18 seconds long operation, during which it does those steps:
-- Turns on the in-car keyfob
-- Unlocks the car
-- Locks the car 
-- Virtually presses the start button, turning on the ignition
-- Waits some seconds, to let the engine be ready to start.
-- Virtually presses the brake and the start button, turning on the engine
-- Turns off the in-car key.
+1. Turns on the in-car keyfob
+2. Unlocks the car
+3. Locks the car 
+4. Virtually presses the start button, turning on the ignition
+5. Waits some seconds, to let the engine be ready to start.
+6. Virtually presses the brake and the start button, turning on the engine
+7. Turns off the in-car key.
 
 # Security issues
 **The spare key is always in the car. Wouldn't this be enough to allow a thief to turn on the engine?**
