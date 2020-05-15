@@ -23,11 +23,18 @@ Yes, but actually no. The Arduino turns on the keyfob only when it needs it to r
 The lock and unlock thing is needed to be able to turn on the ignition. This is because of the BMW security protocol, which disables the possibility of turning on the car if the car wasn't opened before. This is not a security issues though, because this process happens in 2 seconds and the car remains open for just 1 second.
 
 # Required things
-Here's a list of boards you need for this project:
+Here's a list of things you need for this project:
 - Arduino Nano
 - LM2596S voltage regulator board
 - MCP2515 Canbus board (Niren)
 - 6x Relay Board 5V
+- 2x 560Ω (to replicate the start button internal 560Ω resistor) 
+- 1x 1100Ω (to replicate the 12mA current outputted by the hall sensor inside the brake light switch)
+
+You can get those resistance values by putting more resistors in series and sum the resistance value.
+For example:
+- to get a 550Ω resistance, you can put 220Ω and 330Ω resistors in series! 
+- to get a 1100Ω resistance, you can put 1kΩ and 100Ω resistors in series!
 
 # Wiring
 
@@ -70,7 +77,7 @@ You have to simulate the press of the switch using the relay. To do that, just h
 You can follow this schematic to build everything:
 ![arduino wiring](images/wiring_4.png)
 
-And this is the final look:
+And this is the final look (it's ugly, I know. You can make it definitely better):
 ![arduino_final wiring](images/wiring_5.jpg)
 
 # Credits
