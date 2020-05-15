@@ -1,15 +1,21 @@
 # BMW F30 REMOTE START
-BMW F30 Remote start feature with Arduino
+BMW F30 Remote start project, made with Arduino
+
+# Features
+This project allows to do this things:
+- If the engine is off, remote start the car with a triple click on the lock button of the OEM keyfob.
+- After 15 minutes from remote start, if no one started driving, automatically shut off the car
+- If the engine is on, remote stop the car with a triple click on the lock button of the OEM keyfob.
 
 # How it works
 The Arduino, thanks to the MCP2515 board, constantly listen to the BMW K-CAN2 bus, looking for a triple lock button click. If found, it starts a 18 seconds long operation, during which it does those steps:
-- Turns on the in-car keyfob
-- Unlocks the car
-- Locks the car 
-- Virtually presses the start button, turning on the ignition
-- Waits some seconds, to let the engine be ready to start.
-- Virtually presses the brake and the start button, turning on the engine
-- Turns off the in-car key.
+1. Turns on the in-car keyfob
+2. Unlocks the car
+3. Locks the car 
+4. Virtually presses the start button, turning on the ignition
+5. Waits some seconds, to let the engine be ready to start.
+6. Virtually presses the brake and the start button, turning on the engine
+7. Turns off the in-car key.
 
 # Security issues
 **The spare key is always in the car. Wouldn't this be enough to allow a thief to turn on the engine?**
@@ -57,6 +63,9 @@ Attention: you can't use the 12V plug as power source, you need an always-powere
 **Brake Light Switch and Start-Stop Button**
 
 Here you can see how to wire break light switch and start/stop button:
+- The start-stop button wiring is right behind the switch button, just pull it out.
+- The break light switch wiring is above the brake pedal.
+
 ![CAR Wiring](images/wiring_1.png)
 
 ## KeyFob Wiring
@@ -64,21 +73,32 @@ Here you can see how to wire break light switch and start/stop button:
 **KeyFob Power**
 
 You have to interrupt the battery positive connection, split it in 2 wires and feed them inside the relay:
+
 ![KEY_POWER wiring](images/wiring_2.jpg)
 
 
 **KeyFob Lock and Unlock buttons**
 
 You have to simulate the press of the switch using the relay. To do that, just hook to the key switches like that:
+
 ![KEY_LOCK/UNLOCK wiring](images/wiring_3.jpg)
 
 ## Arduino wiring
 
-You can follow this schematic to build everything:
+**Schematic**
+
+You can follow this schematic to build everything.
+Note: this schematic shows a 8x relay board, but you can use a 6x one
+
 ![arduino wiring](images/wiring_4.png)
 
-And this is the final look (it's ugly, I know. You can make it definitely better):
+
+**Final look**
+
+This is the final look, with the spare key wired. You have to hide it somewhere inside the car.
+(it's ugly, I know. You can make it definitely better)
 ![arduino_final wiring](images/wiring_5.jpg)
+
 
 # Credits
 autowp for [arduino-mcp2515 library](https://github.com/autowp/arduino-mcp2515)
