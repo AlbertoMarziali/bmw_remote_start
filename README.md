@@ -31,9 +31,9 @@ The lock and unlock thing is needed to be able to turn on the ignition. This is 
 # Required things
 Here's a list of things you need for this project:
 - Arduino Nano
-- LM2596S voltage regulator board
+- LM2596S voltage regulator board, with the output regulated to 5V
 - MCP2515 Canbus board (Niren)
-- 6x Relay Board 5V
+- 6x Relay Board with 5V relays
 - 2x 560Ω (to replicate the start button internal 560Ω resistor) 
 - 1x 1100Ω (to replicate the 12mA current outputted by the hall sensor inside the brake light switch)
 
