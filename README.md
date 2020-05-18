@@ -51,6 +51,14 @@ For example:
 - to get a 1100Ω resistance, you can put 1kΩ and 100Ω resistors in series!
 
 # Wiring
+You have to do the wiring for:
+- KCan2 bus
+- 12V and GND
+- Brake light switch
+- Start button switches
+- Keyfob battery
+- Keyfob lock switch
+- Keyfob unlock switch
 
 ## Car Wiring
 
