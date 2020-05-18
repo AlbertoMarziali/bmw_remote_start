@@ -6,6 +6,7 @@ This project allows to do this things:
 - If the engine is off, remote start the car with a triple click on the lock button of the OEM keyfob.
 - After 15 minutes from remote start, if no one started driving, automatically shut off the car
 - If the engine is on, remote stop the car with a triple click on the lock button of the OEM keyfob.
+- You have to unlock the car before driving it (why wouldn't you) or it will perform an emergency anti-thief stop
 
 # How it works
 The Arduino, thanks to the MCP2515 board, constantly listen to the BMW K-CAN2 bus, looking for a triple lock button click. If found, it starts a 18 seconds long operation, during which it does those steps:
@@ -18,6 +19,12 @@ The Arduino, thanks to the MCP2515 board, constantly listen to the BMW K-CAN2 bu
 7. Turns off the in-car key.
 
 # Security issues
+**What happens if a thief enter the car (by smashing the window) and tries to steal it?**
+
+If someone tries to engage a gear with the car remote started, without unlocking it with a keyfob first, the car automatically shuts off.
+
+
+
 **The spare key is always in the car. Wouldn't this be enough to allow a thief to turn on the engine?**
 
 Yes, but actually no. The Arduino turns on the keyfob only when it needs it to remote start. Normally the key isn't powered so the car doesn't see it and can't be turned on!

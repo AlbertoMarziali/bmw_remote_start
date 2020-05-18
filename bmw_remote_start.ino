@@ -2,9 +2,6 @@
 #include <mcp2515.h>
 #include <SPI.h>
 
-//comment to enable can
-//#define PROTO
-
 //relays use inverted logic
 enum RELAY_STATUS {
     RELAY_HIGH = 0,
@@ -19,14 +16,6 @@ enum RELAYS {
   RELAY_KEY_POWER = 5,
   RELAY_KEY_LOCK = 6,
   RELAY_KEY_UNLOCK = 7
-};
-
-//proto buttons
-enum PROTO_BUTTONS {
-  PROTO_BUTTON_LOCK = 10,
-  PROTO_BUTTON_BRAKE = 11,
-  PROTO_BUTTON_KEY = 12,
-  PROTO_BUTTON_ENGINE_STATUS = 13
 };
 
 
@@ -55,25 +44,6 @@ unsigned long cur_lock_detected_time = 0;
 struct can_frame canMsg;
 MCP2515 mcp2515(10);
 
-#ifdef PROTO
-void proto_setup()
-{
-  pinMode(PROTO_BUTTON_LOCK, INPUT);
-  pinMode(PROTO_BUTTON_BRAKE, INPUT);
-  pinMode(PROTO_BUTTON_KEY, INPUT);
-  pinMode(PROTO_BUTTON_ENGINE_STATUS, INPUT);
-}
-
-void proto_updateStatus()
-{
-   status_engine_running = false; //digitalRead(PROTO_BUTTON_ENGINE_STATUS) == HIGH;
-   status_lock_button = digitalRead(PROTO_BUTTON_LOCK) == HIGH;
-   status_brake_light = false; //digitalRead(PROTO_BUTTON_BRAKE) == HIGH;
-}
-#endif
-
-
-
 
 /* CAN CODES
  * BREAK LIGHT
@@ -81,7 +51,8 @@ void proto_updateStatus()
  * 
  * KEYFOB 
  * 0x23A : data: xx F3 04 3F ->  lock button pressed
- * 0x23A : data: xx F3 00 3F ->  lock button released
+ * 0x23A : data: xx F3 01 3F ->  unlock button pressed
+ * 0x23A : data: xx F3 00 3F ->  key button released
  * 
  * ENGINE STATUS
  * 0x0A5 : data: Byte[5] = 0x00 and Byte[5] = 0x00 -> if engine is NOT running
@@ -127,12 +98,20 @@ void can_updateStatus()
          status_lock_button = true;
        }
       else if((canMsg.data[1] == 0xF3)
-         && (canMsg.data[2] == 0x00)
-         && (canMsg.data[3] == 0x3F)) //data = 11 F3 00 3F ->  lock button released
+         && (canMsg.data[2] == 0x01)
+         && (canMsg.data[3] == 0x3F)) //data = 11 F3 01 3F ->  unlock button pressed
        {
-         Serial.println("Lock button released"); 
+         Serial.println("Unlock button pressed, out of remote start scope"); 
+         remote_started = false;
+       }
+      else if((canMsg.data[1] == 0xF3)
+         && (canMsg.data[2] == 0x00)
+         && (canMsg.data[3] == 0x3F)) //data = 11 F3 00 3F ->  key button released
+       {
+         Serial.println("Key button released"); 
          status_lock_button = false;
        }
+      
     }
     else if(canMsg.can_id == 0x0A5)  //can id for engine status
     {
@@ -333,7 +312,7 @@ void engine_do_stop()
 
 void setup() {  
   Serial.begin(9600);
-  Serial.print("[ BMW REMOTE START v1 ]\n");
+  Serial.println("[ BMW REMOTE START v1 ]");
   
   pinMode(RELAY_START_1, OUTPUT);       
   pinMode(RELAY_START_2, OUTPUT); 
@@ -348,22 +327,16 @@ void setup() {
   digitalWrite(RELAY_KEY_POWER, RELAY_LOW);
   digitalWrite(RELAY_KEY_LOCK, RELAY_LOW);
   digitalWrite(RELAY_KEY_UNLOCK, RELAY_LOW);
-  
-#ifdef PROTO 
-  proto_setup();
-#else
+
+  //setup MCP2515
   can_setup();
-#endif
 }  
  
 void loop() {  
 
     //update status
-#ifdef PROTO 
-    proto_updateStatus();
-#else
     can_updateStatus();
-#endif
+
 
     //reset the timer if timeout from previous lock
      if(millis() - last_lock_detected_time > 1500) 
@@ -409,14 +382,17 @@ void loop() {
         }
     }
     
-    //brake behavoir
-    //if you enter the remote started car (1 sec bonus for canbus to update), exit remote start scope
+    /* --- EMERGENCY STOP ---
+    * if you enter the remote started car (1 sec bonus for canbus to update), 
+    * without unlocking the car (eg. a thief trying to steal the car)
+    * and press the brake, exit remote start scope
+    */
     if(remote_started && (millis() - remote_start_time > 1000) && status_brake_light)
     {
       //out of remote start scope
+      Serial.println("** EMERGENCY ANTI-THIEF STOP **");
+      engine_stop = true;
       remote_started = false;
-
-      Serial.print("no more remote scope\n");
     }
 
     //remote start timeout
@@ -424,14 +400,12 @@ void loop() {
     if(remote_started && (millis() - remote_start_time > (unsigned long) 1000 * 60 * 15))
     {
       //engine stop
-      Serial.print("end of remote start\n");
+      Serial.println("** TIMEOUT STOP **");
       engine_stop = true;
       remote_started = false;
     }
 
     //Now that everything is decided, do the things it has to do
-
-    
 
     //engine start
     if(engine_start)
