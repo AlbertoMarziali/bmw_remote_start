@@ -112,6 +112,7 @@ Note: this schematic shows a 8x relay board, but you can use a 6x one
 **Final look**
 
 This is the final look, with the spare key wired. You have to hide it somewhere inside the car.
+
 (it's ugly, I know. You can make it definitely better)
 ![arduino_final wiring](images/wiring_5.jpg)
 
