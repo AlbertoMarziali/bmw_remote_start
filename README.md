@@ -120,5 +120,4 @@ This is the final look, with the spare key wired. You have to hide it somewhere 
 autowp for [arduino-mcp2515 library](https://github.com/autowp/arduino-mcp2515)
 
 # Donate
-If you like my work, feel free to [donate me](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=96KHFR9W2UR7E&source=url)
- 
+If you like my work, feel free to [donate me](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=96KHFR9W2UR7E&source=url)! I would highly appreciate it!
