@@ -43,6 +43,7 @@ Here's a list of things you need for this project:
 - 6x Relay Board with 5V relays
 - 2x 560Ω (to replicate the start button internal 560Ω resistor) 
 - 1x 1100Ω (to replicate the 12mA current outputted by the hall sensor inside the brake light switch)
+- The spare keyfob
 
 You can get those resistance values by putting more resistors in series and sum the resistance value.
 For example:
