@@ -181,81 +181,55 @@ void engine_do_start()
   }
   
   //divided in phases:
-  //KEY_POWER_ON - 10 seconds
-  if(millis() - engine_do_start_time < 2000)
+  //KEY_POWER_ON - 100 ms
+  if(millis() - engine_do_start_time < 100)
   {
     digitalWrite(RELAY_KEY_POWER, RELAY_HIGH);
-    Serial.println("1) Turn on the in-car key (2 sec)");
+    Serial.println("1) Turn on the in-car key (100 ms)");
   }
-  //KEY_UNLOCK - 1 second
-  else if(millis() - engine_do_start_time < 3000)
-  {
-    digitalWrite(RELAY_KEY_UNLOCK, RELAY_HIGH);
-    Serial.println("2) Press unlock button (1 sec)");
-  }
-  //KEY_UNLOCK_RELEASE - 1 second
-  else if(millis() - engine_do_start_time < 4000)
-  {
-    digitalWrite(RELAY_KEY_UNLOCK, RELAY_LOW);
-    Serial.println("3) Release unlock button and wait (1 sec)");
-  }
-  //KEY_LOCK - 1 second
-  else if(millis() - engine_do_start_time < 5000)
+  //KEY_LOCK - 300 ms
+  else if(millis() - engine_do_start_time < 400)
   {
     digitalWrite(RELAY_KEY_LOCK, RELAY_HIGH);
-    Serial.println("4) Press lock button (1 sec)");
+    Serial.println("2) Press lock button (300 ms)");
   }
-  //KEY_LOCK_RELEASE - 1 second
-  else if(millis() - engine_do_start_time < 6000)
+  //KEY_LOCK_RELEASE - 400 ms
+  else if(millis() - engine_do_start_time < 800)
   {
     digitalWrite(RELAY_KEY_LOCK, RELAY_LOW);
-    Serial.println("5) Release lock button and wait (1 sec)");
+    Serial.println("3) Release lock button and wait (400 ms)");
   }
-  //KEY_START - 1 second
-  else if(millis() - engine_do_start_time < 7000)
-  {
-    digitalWrite(RELAY_START_1, RELAY_HIGH);
-    digitalWrite(RELAY_START_2, RELAY_HIGH);
-    Serial.println("6) Press start button (1 sec)");
-  }
-  //KEY_START_RELEASE - 1 second
-  else if(millis() - engine_do_start_time < 8000)
-  {
-    digitalWrite(RELAY_START_1, RELAY_LOW);
-    digitalWrite(RELAY_START_2, RELAY_LOW);
-    Serial.println("7) Release the start button and wait (1 sec)");
-  }
-  //KEY_BRAKE - 5 seconds
-  else if(millis() - engine_do_start_time < 13000)
+  //BRAKE - 100 ms
+  else if(millis() - engine_do_start_time < 900)
   {
     digitalWrite(RELAY_BRAKE, RELAY_HIGH);
-    Serial.println("8) Start holding the brake and wait (5 sec)");
+    Serial.println("8) Start holding the brake and wait (100 ms)");
   }
-  //KEY_START - 2 second
-  else if(millis() - engine_do_start_time < 15000)
+  //START - 700 ms
+  else if(millis() - engine_do_start_time < 1600)
   {
     digitalWrite(RELAY_START_1, RELAY_HIGH);
     digitalWrite(RELAY_START_2, RELAY_HIGH);
-    Serial.println("9) Press the start button (2 sec)");
+    Serial.println("9) Press the start button (700 ms)");
   }
-  //KEY_START_RELEASE - 1 second
-  else if(millis() - engine_do_start_time < 16000)
+  //START_RELEASE - 100 ms
+  else if(millis() - engine_do_start_time < 1700)
   {
     digitalWrite(RELAY_START_1, RELAY_LOW);
     digitalWrite(RELAY_START_2, RELAY_LOW);
-    Serial.println("10) Release the start button and wait (1 sec)");
+    Serial.println("10) Release the start button and wait (100 ms)");
   }
-  //KEY_BRAKE_RELEASE - 1 second
-  else if(millis() - engine_do_start_time < 17000)
+  //BRAKE_RELEASE - 200 ms
+  else if(millis() - engine_do_start_time < 1900)
   {
     digitalWrite(RELAY_BRAKE, RELAY_LOW);
-    Serial.println("11) Release the brake and wait (1 sec)");
+    Serial.println("11) Release the brake and wait (200 ms)");
   }
-  //KEY_POWER_RELEASE - 1 second
-  else if(millis() - engine_do_start_time < 18000)
+  //KEY_POWER_RELEASE - 100 ms
+  else if(millis() - engine_do_start_time < 2000)
   {
     digitalWrite(RELAY_KEY_POWER, RELAY_LOW);
-    Serial.println("12) Turn off the in-car key (1 sec)");
+    Serial.println("12) Turn off the in-car key (100 ms)");
   }
   //ENGINE STARTED
   else
@@ -284,19 +258,19 @@ void engine_do_stop()
     Serial.println("*** Engine stopping ***");
   }
 
-  //KEY_START - 1 sec
-  if(millis() - engine_do_stop_time < 1000)
+  //START - 700 ms
+  if(millis() - engine_do_stop_time < 700)
   {
     digitalWrite(RELAY_START_1, RELAY_HIGH);
     digitalWrite(RELAY_START_2, RELAY_HIGH);
-    Serial.println("1) Press start button (1 sec)");
+    Serial.println("1) Press start button (700 ms)");
   }
-  //KEY_START_RELEASE - 1 sec
-  else if(millis() - engine_do_stop_time < 2000)
+  //START_RELEASE - 1 sec
+  else if(millis() - engine_do_stop_time < 800)
   {
     digitalWrite(RELAY_START_1, RELAY_LOW);
     digitalWrite(RELAY_START_2, RELAY_LOW);
-    Serial.println("2) Release the start button and wait (1 sec)");
+    Serial.println("2) Release the start button (100 ms)");
   }
   //ENGINE STOPPED
   else
