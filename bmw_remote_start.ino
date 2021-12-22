@@ -12,7 +12,7 @@ enum RELAY_STATUS {
 enum RELAYS {
   RELAY_START_1 = 2,  
   RELAY_START_2 = 3,  
-  RELAY_BRAKE = 4,
+  RELAY_CLUTCH = 4,
   RELAY_KEY_POWER = 5,
   RELAY_KEY_LOCK = 6,
   RELAY_KEY_UNLOCK = 7
@@ -22,7 +22,7 @@ enum RELAYS {
 //booleans keep track of statuses read from canbus
 bool status_engine_running = false;
 bool status_lock_button = false;
-bool status_brake_light = false;
+bool status_clutch_pressed = false;
 
 //engine actions data
 bool engine_start = false;
@@ -75,17 +75,17 @@ void can_updateStatus()
     Serial.println(); 
   */
     //doing the check!
-    if(canMsg.can_id == 0x21A)       //can id for brake light
+    if(canMsg.can_id == 0x3F9)       //can id for clutch 
     {
-      if (canMsg.data[0] & 0x80)     //first bit of first byte is 1
+      if ((canMsg.data[3] & 0xC) == 0x4)     //bit 2-3 of byte 3 are 01
       {
-        Serial.println("Brake on"); 
-        status_brake_light = true;
+        Serial.println("Clutch pressed"); 
+        status_clutch_pressed = true;
       }
-      else
+      else if((canMsg.data[3] & 0xC) == 0x0)
       {
-        Serial.println("Brake off"); 
-        status_brake_light = false;
+        Serial.println("Clutch not pressed"); 
+        status_clutch_pressed = false;
       }
     }
     else if(canMsg.can_id == 0x23A)  //can id for keyfob
@@ -147,7 +147,7 @@ void can_setup()
   mcp2515.setFilterMask(MCP2515::MASK1, 0, 0x3ff);
 
   //init the filters
-  mcp2515.setFilter(MCP2515::RXF0, 0, 0x21A); //break light
+  mcp2515.setFilter(MCP2515::RXF0, 0, 0x3F9); //clutch status
   mcp2515.setFilter(MCP2515::RXF1, 0, 0x23A); //keyfob
   mcp2515.setFilter(MCP2515::RXF2, 0, 0x0A5); //rpm
 
@@ -165,10 +165,10 @@ void can_setup()
  * 5) Release lock button and wait (1 sec)
  * 6) Press start button (1 sec)
  * 7) Release the start button and wait (1 sec)
- * 8) Start holding the brake and wait (5 sec)
+ * 8) Start holding the clutch and wait (5 sec)
  * 9) Press the start button (2 sec)
  * 10) Release the start button and wait (1 sec)
- * 11) Release the brake and wait (1 sec)
+ * 11) Release the clutch and wait (1 sec)
  * 12) Turn off the in-car key (1 sec)
  */
 
@@ -199,34 +199,34 @@ void engine_do_start()
     digitalWrite(RELAY_KEY_LOCK, RELAY_LOW);
     Serial.println("3) Release lock button and wait (400 ms)");
   }
-  //BRAKE - 100 ms
-  else if(millis() - engine_do_start_time < 900)
+  //CLUTCH - 5000 ms
+  else if(millis() - engine_do_start_time < 5800)
   {
-    digitalWrite(RELAY_BRAKE, RELAY_HIGH);
-    Serial.println("8) Start holding the brake and wait (100 ms)");
+    digitalWrite(RELAY_CLUTCH, RELAY_HIGH);
+    Serial.println("8) Start holding the clutch and wait (5000 ms)");
   }
   //START - 1500 ms
-  else if(millis() - engine_do_start_time < 2400)
+  else if(millis() - engine_do_start_time < 6300)
   {
     digitalWrite(RELAY_START_1, RELAY_HIGH);
     digitalWrite(RELAY_START_2, RELAY_HIGH);
     Serial.println("9) Press the start button (1500 ms)");
   }
   //START_RELEASE - 100 ms
-  else if(millis() - engine_do_start_time < 2500)
+  else if(millis() - engine_do_start_time < 6400)
   {
     digitalWrite(RELAY_START_1, RELAY_LOW);
     digitalWrite(RELAY_START_2, RELAY_LOW);
     Serial.println("10) Release the start button and wait (100 ms)");
   }
-  //BRAKE_RELEASE - 200 ms
-  else if(millis() - engine_do_start_time < 2700)
+  //CLUTCH_RELEASE - 200 ms
+  else if(millis() - engine_do_start_time < 6600)
   {
-    digitalWrite(RELAY_BRAKE, RELAY_LOW);
-    Serial.println("11) Release the brake and wait (200 ms)");
+    digitalWrite(RELAY_CLUTCH, RELAY_LOW);
+    Serial.println("11) Release the clutch and wait (200 ms)");
   }
   //KEY_POWER_RELEASE - 100 ms
-  else if(millis() - engine_do_start_time < 2800)
+  else if(millis() - engine_do_start_time < 6700)
   {
     digitalWrite(RELAY_KEY_POWER, RELAY_LOW);
     Serial.println("12) Turn off the in-car key (100 ms)");
@@ -290,14 +290,14 @@ void setup() {
   
   pinMode(RELAY_START_1, OUTPUT);       
   pinMode(RELAY_START_2, OUTPUT); 
-  pinMode(RELAY_BRAKE, OUTPUT);
+  pinMode(RELAY_CLUTCH, OUTPUT);
   pinMode(RELAY_KEY_POWER, OUTPUT);
   pinMode(RELAY_KEY_LOCK, OUTPUT);
   pinMode(RELAY_KEY_UNLOCK, OUTPUT);
 
   digitalWrite(RELAY_START_1, RELAY_LOW);
   digitalWrite(RELAY_START_2, RELAY_LOW);
-  digitalWrite(RELAY_BRAKE, RELAY_LOW);
+  digitalWrite(RELAY_CLUTCH, RELAY_LOW);
   digitalWrite(RELAY_KEY_POWER, RELAY_LOW);
   digitalWrite(RELAY_KEY_LOCK, RELAY_LOW);
   digitalWrite(RELAY_KEY_UNLOCK, RELAY_LOW);
@@ -359,9 +359,9 @@ void loop() {
     /* --- EMERGENCY STOP ---
     * if you enter the remote started car (1 sec bonus for canbus to update), 
     * without unlocking the car (eg. a thief trying to steal the car)
-    * and press the brake, exit remote start scope
+    * and press the clutch, exit remote start scope
     */
-    if(remote_started && (millis() - remote_start_time > 1000) && status_brake_light)
+    if(remote_started && (millis() - remote_start_time > 2000) && status_clutch_pressed)
     {
       //out of remote start scope
       Serial.println("** EMERGENCY ANTI-THIEF STOP **");
