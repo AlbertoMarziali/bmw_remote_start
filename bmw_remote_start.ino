@@ -158,18 +158,14 @@ void can_setup()
 
 
 /* ENGINE START:
- * 1) Turn on the in-car key (2 sec)
- * 2) Press unlock button (1 sec)
- * 3) Release unlock button and wait (1 sec)
- * 4) Press lock button (1 sec)
- * 5) Release lock button and wait (1 sec)
- * 6) Press start button (1 sec)
- * 7) Release the start button and wait (1 sec)
- * 8) Start holding the brake and wait (5 sec)
- * 9) Press the start button (2 sec)
- * 10) Release the start button and wait (1 sec)
- * 11) Release the brake and wait (1 sec)
- * 12) Turn off the in-car key (1 sec)
+ * 1) Turn on the in-car key (100 ms)
+ * 2) Press lock button (300 ms)
+ * 3) Release lock button and wait (400 ms)
+ * 4) Start holding the brake and wait (5 sec)
+ * 5) Press the start button (2 sec)
+ * 6) Release the start button and wait (1 sec)
+ * 7) Release the brake and wait (1 sec)
+ * 8) Turn off the in-car key (1 sec)
  */
 
 void engine_do_start()
@@ -200,33 +196,33 @@ void engine_do_start()
     Serial.println("3) Release lock button and wait (400 ms)");
   }
   //BRAKE - 100 ms
-  else if(millis() - engine_do_start_time < 900)
+  else if(millis() - engine_do_start_time < 2800)
   {
     digitalWrite(RELAY_BRAKE, RELAY_HIGH);
-    Serial.println("8) Start holding the brake and wait (100 ms)");
+    Serial.println("8) Start holding the brake and wait (2000 ms)");
   }
   //START - 1500 ms
-  else if(millis() - engine_do_start_time < 2400)
+  else if(millis() - engine_do_start_time < 4300)
   {
     digitalWrite(RELAY_START_1, RELAY_HIGH);
     digitalWrite(RELAY_START_2, RELAY_HIGH);
     Serial.println("9) Press the start button (1500 ms)");
   }
   //START_RELEASE - 100 ms
-  else if(millis() - engine_do_start_time < 2500)
+  else if(millis() - engine_do_start_time < 4400)
   {
     digitalWrite(RELAY_START_1, RELAY_LOW);
     digitalWrite(RELAY_START_2, RELAY_LOW);
     Serial.println("10) Release the start button and wait (100 ms)");
   }
   //BRAKE_RELEASE - 200 ms
-  else if(millis() - engine_do_start_time < 2700)
+  else if(millis() - engine_do_start_time < 4600)
   {
     digitalWrite(RELAY_BRAKE, RELAY_LOW);
     Serial.println("11) Release the brake and wait (200 ms)");
   }
   //KEY_POWER_RELEASE - 100 ms
-  else if(millis() - engine_do_start_time < 2800)
+  else if(millis() - engine_do_start_time < 4700)
   {
     digitalWrite(RELAY_KEY_POWER, RELAY_LOW);
     Serial.println("12) Turn off the in-car key (100 ms)");
@@ -246,8 +242,8 @@ void engine_do_start()
 
 
 /* ENGINE STOP:
- * 1) Press start button (1 sec)
- * 2) Release the start button and wait (1 sec)
+ * 1) Press start button (700 ms)
+ * 2) Release the start button and wait (100 ms)
  */
 
 void engine_do_stop()
@@ -361,7 +357,7 @@ void loop() {
     * without unlocking the car (eg. a thief trying to steal the car)
     * and press the brake, exit remote start scope
     */
-    if(remote_started && (millis() - remote_start_time > 1000) && status_brake_light)
+    if(remote_started && (millis() - remote_start_time > 2000) && status_brake_light)
     {
       //out of remote start scope
       Serial.println("** EMERGENCY ANTI-THIEF STOP **");
